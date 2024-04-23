@@ -115,7 +115,7 @@ class Sentence():
         """
         if self.count == 0:
             return self.cells
-        return set()
+        return None
 
     def mark_mine(self, cell):
         """
@@ -192,7 +192,7 @@ class MinesweeperAI():
         #1
         self.moves_made.add(cell)
         #2
-        self.safes.add(cell)
+        self.mark_safe(cell)
         #3
         new_sentence = Sentence(cell, count)
         if not new_sentence in self.knowledge:
@@ -201,18 +201,20 @@ class MinesweeperAI():
         #4 
         for set1 in self.knowledge:
             if set1.known_mines() != set():
+                print(f"these are mines {set1.cells}")
                 self.mark_mine(tuple(set1.cells))
             else:
-                if set1.known_safes() != set():
+                if set1.known_safes() == None:
                     self.mark_safe(tuple(set1.cells))
             for set2 in self.knowledge:
                 if not set1.cells == set2.cells:
-                    if set1.cells.issubset(set2.cells):
+                    if set1.cells.issubset(set2.cells) and not set1 in self.knowledge:
                         print(f"{set1.cells} is a subset of {set2.cells}")
                         new_cells = set2.cells - set1.cells 
                         new_count = set2.count - set1.count
-                        
-                        self.knowledge.append((Sentence(new_cells, new_count)))
+                        sentence_subset = Sentence(new_cells, new_count)
+                        if not sentence_subset in self.knowledge:
+                            self.knowledge.append(sentence_subset)
                     
 
     def make_safe_move(self):
