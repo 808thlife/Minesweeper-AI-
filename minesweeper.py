@@ -1,6 +1,6 @@
 import itertools
 import random
-
+from copy import copy
 
 class Minesweeper():
     """
@@ -115,7 +115,7 @@ class Sentence():
         """
         if self.count == 0:
             return self.cells
-        return None
+        return set()
 
     def mark_mine(self, cell):
         """
@@ -193,29 +193,59 @@ class MinesweeperAI():
         self.moves_made.add(cell)
         #2
         self.mark_safe(cell)
-        #3
-        new_sentence = Sentence(cell, count)
-        if not new_sentence in self.knowledge:
-            self.knowledge.append(new_sentence)
         
-        #4 
+        # i should get all the adjacent cells and 
+        # based on this i have to add  a new sentence based on neighbouring cells
+        #if len of cells are equal to the count number then these are mines far sur.
+        neighbors = self.get_neighbors(cell)
+        self.knowledge.append(Sentence(neighbors,count))
+        
+        for sentence in self.knowledge:
+            known_mines = sentence.known_mines()
+            if known_mines != set():
+                for mine in known_mines.copy():
+                    self.mark_mine(mine)
+            known_safes = sentence.known_safes()
+            if known_safes != set():
+                for mine in known_safes.copy():
+                    self.mark_safe(mine)
+
+                
         for set1 in self.knowledge:
-            if set1.known_mines() != set():
-                print(f"these are mines {set1.cells}")
-                self.mark_mine(tuple(set1.cells))
-            else:
-                if set1.known_safes() == None:
-                    self.mark_safe(tuple(set1.cells))
             for set2 in self.knowledge:
-                if not set1.cells == set2.cells:
-                    if set1.cells.issubset(set2.cells) and not set1 in self.knowledge:
-                        print(f"{set1.cells} is a subset of {set2.cells}")
-                        new_cells = set2.cells - set1.cells 
-                        new_count = set2.count - set1.count
-                        sentence_subset = Sentence(new_cells, new_count)
-                        if not sentence_subset in self.knowledge:
-                            self.knowledge.append(sentence_subset)
-                    
+                if set1.cells.issubset(set2.cells) and not set1 == set2:
+                    #print(f"{set1.cells} is subset of {set2.cells}\n")
+                    new_set = set2.cells - set1.cells
+                    new_count = set2.count - set1.count
+                    new_sentence = Sentence(new_set, new_count)
+                    #print(f"new sentence is {new_sentence}\n")
+                    if not new_sentence in self.knowledge:
+                        self.knowledge.append(new_sentence)
+                    continue
+
+        # for sentence in self.knowledge:
+        #     for cell in sentence.cells.copy():
+        #         if cell in self.mines or cell in self.safes:
+        #             self.sentence.remove(cell)
+        #             if sentence.cells == set():
+        #                 pass
+
+
+    def get_neighbors(self, cell):
+        neighbors = set()
+        # Loop over all cells within one row and column
+        for i in range(cell[0] - 1, cell[0] + 2):
+            for j in range(cell[1] - 1, cell[1] + 2):
+
+                # Ignore the cell itself
+                if (i, j) == cell:
+                    continue
+
+                # Update count if cell in bounds and is mine
+                if 0 <= i < self.height and 0 <= j < self.width:
+                    neighbors.add((i,j))
+        return neighbors
+
 
     def make_safe_move(self):
         """
