@@ -194,23 +194,15 @@ class MinesweeperAI():
         #2
         self.mark_safe(cell)
         
+        empty_sentence = Sentence(set(), 0)
+
         # i should get all the adjacent cells and 
         # based on this i have to add  a new sentence based on neighbouring cells
         #if len of cells are equal to the count number then these are mines far sur.
         neighbors = self.get_neighbors(cell)
         self.knowledge.append(Sentence(neighbors,count))
-        
-        for sentence in self.knowledge:
-            known_mines = sentence.known_mines()
-            if known_mines != set():
-                for mine in known_mines.copy():
-                    self.mark_mine(mine)
-            known_safes = sentence.known_safes()
-            if known_safes != set():
-                for mine in known_safes.copy():
-                    self.mark_safe(mine)
 
-                
+        #substracting subsets.
         for set1 in self.knowledge:
             for set2 in self.knowledge:
                 if set1.cells.issubset(set2.cells) and not set1 == set2:
@@ -223,13 +215,17 @@ class MinesweeperAI():
                         self.knowledge.append(new_sentence)
                     continue
 
-        # for sentence in self.knowledge:
-        #     for cell in sentence.cells.copy():
-        #         if cell in self.mines or cell in self.safes:
-        #             self.sentence.remove(cell)
-        #             if sentence.cells == set():
-        #                 pass
-
+            for sentence in self.knowledge:
+                known_mines = sentence.known_mines()
+                if known_mines != set():
+                    for mine in known_mines.copy():
+                        self.mark_mine(mine)
+                known_safes = sentence.known_safes()
+                if known_safes != set():
+                    for mine in known_safes.copy():
+                        self.mark_safe(mine)
+            
+        self.knowledge[:] = [x for x in self.knowledge if x != empty_sentence]
 
     def get_neighbors(self, cell):
         neighbors = set()
@@ -273,7 +269,7 @@ class MinesweeperAI():
         possible_moves = []
         for i in range(0, height):
             for j in range(0, width):
-                if not (i,j) in self.moves_made:
+                if not (i,j) in self.moves_made and not (i,j) in self.mines:
                     possible_moves.append((i,j))
 
         return random.choice(possible_moves)
