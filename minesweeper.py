@@ -196,6 +196,17 @@ class MinesweeperAI():
         
         empty_sentence = Sentence(set(), 0)
 
+        for sentence in self.knowledge:
+            known_mines = sentence.known_mines()
+            if known_mines != set():
+                for mine in known_mines.copy():
+                    self.mark_mine(mine)
+            known_safes = sentence.known_safes()
+            if known_safes != set():
+                for mine in known_safes.copy():
+                    self.mark_safe(mine)
+
+
         # i should get all the adjacent cells and 
         # based on this i have to add  a new sentence based on neighbouring cells
         #if len of cells are equal to the count number then these are mines far sur.
@@ -204,28 +215,28 @@ class MinesweeperAI():
 
         #substracting subsets.
         for set1 in self.knowledge:
+            print(f"SET1 IS {set1}")
             for set2 in self.knowledge:
-                if set1.cells.issubset(set2.cells) and not set1 == set2:
-                    #print(f"{set1.cells} is subset of {set2.cells}\n")
+                if set1.cells.issubset(set2.cells) and not set1.cells == set2.cells:
+                    print(F"SET2 IS {set2}")
                     new_set = set2.cells - set1.cells
                     new_count = set2.count - set1.count
                     new_sentence = Sentence(new_set, new_count)
-                    #print(f"new sentence is {new_sentence}\n")
+                    print(f"LOOK WE GOT A NEW SENTENCE {new_sentence} of {set1} and {set2}")
                     if not new_sentence in self.knowledge:
                         self.knowledge.append(new_sentence)
                     continue
-
-            for sentence in self.knowledge:
-                known_mines = sentence.known_mines()
-                if known_mines != set():
-                    for mine in known_mines.copy():
-                        self.mark_mine(mine)
-                known_safes = sentence.known_safes()
-                if known_safes != set():
-                    for mine in known_safes.copy():
-                        self.mark_safe(mine)
-            
+        print("======================================================")            
+        print("KNOWLEDGE BASE")
         self.knowledge[:] = [x for x in self.knowledge if x != empty_sentence]
+        for sentence in self.knowledge:
+            for cell in list(sentence.cells):
+                if cell in self.mines:
+                    print(f"this {cell} in {sentence}")
+                    sentence.mark_mine(cell)
+                    print(f"UPDATED SENTENCE IS: {sentence}")
+
+        print(f"THESE CELLS ARE MINES: {self.mines}")
 
     def get_neighbors(self, cell):
         neighbors = set()
@@ -242,7 +253,6 @@ class MinesweeperAI():
                     neighbors.add((i,j))
         return neighbors
 
-
     def make_safe_move(self):
         """
         Returns a safe cell to choose on the Minesweeper board.
@@ -252,9 +262,9 @@ class MinesweeperAI():
         This function may use the knowledge in self.mines, self.safes
         and self.moves_made, but should not modify any of those values.
         """
-        for move in self.safes:
-            if not move in self.moves_made:
-                return move[0],move[1]
+        print(f"SAFE CELLS: {self.safes - self.moves_made}\n")
+        for move in self.safes - self.moves_made:
+            return move[0],move[1]
         return None
 
     def make_random_move(self):
@@ -271,5 +281,7 @@ class MinesweeperAI():
             for j in range(0, width):
                 if not (i,j) in self.moves_made and not (i,j) in self.mines:
                     possible_moves.append((i,j))
+        if len(possible_moves) != 0:
+            return random.choice(possible_moves)
 
-        return random.choice(possible_moves)
+        return None
